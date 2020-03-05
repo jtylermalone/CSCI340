@@ -34,7 +34,7 @@ void *construct_string(void *arg) {
 	// instantiating passed parameter struct so we can
 	// access it in here
 	struct params *parameters = (struct params *) arg;
-		
+	
 	// printing thread id as required
 	printf("\nCurrent thread ID: %d\n", parameters->thread_id);
 	
@@ -46,7 +46,8 @@ void *construct_string(void *arg) {
 	for (int i = 0; i < parameters->string_length; i++) {
 
 		// we only add to global_string if i % number of threads == current thread id...
-		// this works for some reason.
+		// this works for some reason. I was throwing stuff at the wall and
+		// seeing what stuck.
 		if (i % parameters->thread_count == parameters->thread_id) {
 
 			// locking... again, not sure if necessary
@@ -67,6 +68,13 @@ void *construct_string(void *arg) {
 }
 
 int main(int argc, char *argv[]) {
+
+	// ensures that user enters the correct amount of 
+	// arguments
+	if (argc != 3) {
+        fprintf(stderr, "usage: ./hw6 <number of threads> <string length>\n");
+        exit(1);
+      }
 	
 	// getting both command line arguments
 	int number_of_threads = atoi(argv[1]);
