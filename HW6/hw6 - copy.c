@@ -7,37 +7,16 @@
 char *global_string;
 char *string_characters = "Tyler";
 
-pthread_mutex_t lock;
-
-
-struct params {
-
-	int string_length;
-	int thread_number;
-	int thread_count;
-
-};
-
 void *construct_string(void *arg) {
-	struct params *parameters = (struct params *) arg;
-	
-	int current_string_length = strlen(global_string);	
-	printf("\nCurrent thread ID: %d\n", parameters->thread_number);
-	printf("current string length: %d\n", current_string_length);
-	printf("parameters->string_length: %d\n", parameters->string_length);
-	for (int i = 0
-	if (strlen(global_string) < parameters->string_length) {
-		//printf("max length: %d\n", parameters->string_length);
-		printf("strlen(global_string): %d\n", strlen(global_string));
-		assert(pthread_mutex_lock(&lock) == 0);
-		int add_char = strlen(global_string) % strlen(string_characters);
-		printf("add char: %d\n", add_char);
+	printf("Current thread ID: %u\n", pthread_self());
+	int desired_string_length = arg;
+	int current_string_length = strlen(global_string);
+	if (current_string_length < desired_string_length) {
+		char add_char = current_string_length % 5;
 		global_string[current_string_length] = (char)string_characters[add_char];
-		assert(pthread_mutex_unlock(&lock) == 0);
-		printf("Character being added: %c\n\n", global_string[current_string_length]);
+		printf("Character being added: %c\n", global_string[current_string_length]);
 		current_string_length = current_string_length + 1;
 	}
-
 	return NULL;
 }
 
@@ -47,15 +26,11 @@ int main(int argc, char *argv[]) {
 	int length_of_string = atoi(argv[2]);
 	global_string = malloc(length_of_string * sizeof(char));
 	memset(global_string, '\0', (length_of_string * sizeof(char)));
-	pthread_t *threads = malloc(sizeof(pthread_t) * number_of_threads);
-	assert(pthread_mutex_init(&lock, NULL) == 0);
+	pthread_t thread_names[number_of_threads];
 
+	pthread_t *threads = malloc(sizeof(pthread_t) * number_of_threads);
 	for (int i = 0; i < number_of_threads; i++) {
-		struct params *parameters = malloc(sizeof(struct params));
-		parameters->string_length = length_of_string;
-		parameters->thread_number = i + 1;
-		parameters->thread_count = number_of_threads;
-		if (pthread_create(&threads[i], NULL, &construct_string, (void *)parameters) != 0) {
+		if (pthread_create(&threads[i], NULL, &construct_string, length_of_string) != 0) {
 
 			printf("Unable to create thread\n");
 			exit(1);

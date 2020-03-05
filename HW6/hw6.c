@@ -11,8 +11,8 @@
 char *global_string;
 
 // these are the characters that will be 
-// added to global_string one at a time
-char *string_characters = "Tyler + c == disaster! ";
+// added to global_string one at a time.
+char *string_characters = "Tyler + c == disaster ";
 
 // using locks but not sure if it's necessary
 // or actually doing anything
@@ -22,9 +22,9 @@ pthread_mutex_t lock;
 // passed to each thread.
 struct params {
 
-	int string_length;
-	int thread_number;
-	int thread_count;
+	int string_length; // holds 2nd parameter (desired length of string)
+	int thread_id; // holds thread id
+	int thread_count; // holds 1st parameter (total number of threads)
 
 };
 
@@ -36,7 +36,7 @@ void *construct_string(void *arg) {
 	struct params *parameters = (struct params *) arg;
 		
 	// printing thread id as required
-	printf("\nCurrent thread ID: %d\n", parameters->thread_number);
+	printf("\nCurrent thread ID: %d\n", parameters->thread_id);
 	
 	// this checks whether the string has reached the specified length
 	// ... I'm using a for loop because I need the 'i' throughout
@@ -47,7 +47,7 @@ void *construct_string(void *arg) {
 
 		// we only add to global_string if i % number of threads == current thread id...
 		// this works for some reason.
-		if (i % parameters->thread_count == parameters->thread_number) {
+		if (i % parameters->thread_count == parameters->thread_id) {
 
 			// locking... again, not sure if necessary
 			assert(pthread_mutex_lock(&lock) == 0);
@@ -80,8 +80,9 @@ int main(int argc, char *argv[]) {
 	// creating array of threads
 	pthread_t *threads = malloc(sizeof(pthread_t) * number_of_threads);
 
-	// not sure if locking is necessary or if it's
-	// actually doing anything here but I'm doing it
+	// initializing lock...not sure if locking is
+	// necessary or if it's actually doing anything 
+	// here but I'm doing it
 	assert(pthread_mutex_init(&lock, NULL) == 0);
 
 	// adding to threads array and creating each thread
@@ -89,10 +90,10 @@ int main(int argc, char *argv[]) {
 	for (int i = 0; i < number_of_threads; i++) {
 
 		// creating params struct and populating its fields
-		// with the appropriate data
+		// with the appropriate data.
 		struct params *parameters = malloc(sizeof(struct params));
 		parameters->string_length = length_of_string;
-		parameters->thread_number = i;
+		parameters->thread_id = i;
 		parameters->thread_count = number_of_threads;
 
 		// here's where each thread gets created
