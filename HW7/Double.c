@@ -51,6 +51,8 @@ void List_Insert(list_t *L,
 	node_t *tmp = malloc(sizeof(node_t));
 	tmp->key = key;
 	tmp->prev = NULL;
+
+	// lock head while we manipulate it
 	pthread_mutex_lock(&L->head_lock);	
 	tmp->next = L->head;
 	if (L->head == NULL) {
@@ -61,6 +63,8 @@ void List_Insert(list_t *L,
 	}
 	L->head->prev = tmp;
 	L->head = tmp;
+
+	// unlock head
 	pthread_mutex_unlock(&L->head_lock);
 
 }
@@ -73,6 +77,9 @@ void List_Append(list_t *L,
     node_t *tmp = malloc(sizeof(node_t));
 	tmp->key = key;
 	tmp->next = NULL;
+
+	// lock the head while we read it
+	// and/or manipulate it
 	pthread_mutex_lock(&L->head_lock);
 
 	// if list is empty
@@ -83,6 +90,8 @@ void List_Append(list_t *L,
 	}
 	pthread_mutex_unlock(&L->head_lock);
 	
+	// lock the tail since we're manipulating
+	// the tail
 	pthread_mutex_lock(&L->tail_lock);
 	tmp->prev = L->tail;
 
@@ -98,6 +107,36 @@ int List_Lookup(list_t *L,
                 int key) {
 
     // Add code here to lookup an item in the list
+	int return_key;
+
+	// locking the head and tail here... by locking the head
+	// and tail throughout the search, any other threads are
+	// prevented from manipulating the list, and we can know
+	// that the data we're reading is accurate.
+	pthread_mutex_lock(&L->head_lock);
+	pthread_mutex_lock(&L->tail_lock);
+    node_t *current_node = L->head;
+	while (current_node != NULL) {
+		if (current_node->key == key) {
+
+			// just looking at the output, this print statement
+			// makes very little sense. I really just want to 
+			// illustrate here that the lookup succeeded. Though
+			// I am printing two different values (key and
+			// current_node-> key), the values should be the
+			// same within the print statement.
+			printf("found %d: %d\n", key, current_node->key);
+			return_key = key;
+		}
+	current_node = current_node->next;
+	}
+
+	// unlock after search complete
+	pthread_mutex_unlock(&L->head_lock);
+	pthread_mutex_unlock(&L->tail_lock);
+
+	// returning sought-after key
+	return return_key;
     
 }
 
@@ -116,10 +155,16 @@ int main()
 	List_Append(test_list, 6);
 	List_Insert(test_list, -2);
 	node_t *current_node = test_list->head;
-	printf("\nThese keys were not added to the linked list in order but they should display in order:\n\n");
+
+	// printing out list to make sure append/insert working
 	while (current_node != NULL) {
 		printf("current node key: %d\n", current_node->key);
 		current_node = current_node->next;
 	}
+
+	List_Lookup(test_list, 5);
+	List_Lookup(test_list, 7);
+
+	free(test_list);
     return 0;
 }
